@@ -1,73 +1,27 @@
-const mongoose = require('mongoose');
+module.exports = (sequelize, DataTypes) => {
+    const Appointment = sequelize.define('Appointment', {
+        date: {
+            type: DataTypes.DATEONLY,
+            allowNull: false
+        },
+        time: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        reason: {
+            type: DataTypes.STRING
+        },
+        department: { /* Added department as it's often in appointment forms */
+            type: DataTypes.STRING
+        },
+        status: {
+            type: DataTypes.ENUM('pending', 'confirmed', 'completed', 'cancelled'),
+            defaultValue: 'pending'
+        },
+        notes: {
+            type: DataTypes.TEXT
+        }
+    });
 
-const appointmentSchema = new mongoose.Schema({
-    patient: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Patient',
-        required: true
-    },
-    doctor: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Doctor',
-        required: true
-    },
-    date: {
-        type: Date,
-        required: true
-    },
-    timeSlot: {
-        startTime: String,
-        endTime: String
-    },
-    reason: {
-        type: String,
-        trim: true
-    },
-    symptoms: [{
-        type: String,
-        trim: true
-    }],
-    status: {
-        type: String,
-        enum: ['pending', 'confirmed', 'cancelled', 'completed', 'no-show'],
-        default: 'pending'
-    },
-    type: {
-        type: String,
-        enum: ['consultation', 'follow-up', 'emergency', 'routine'],
-        default: 'consultation'
-    },
-    notes: {
-        type: String,
-        trim: true
-    },
-    prescription: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Prescription'
-    },
-    rating: {
-        type: Number,
-        min: 1,
-        max: 5
-    },
-    feedback: {
-        type: String,
-        trim: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-    updatedBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
-    }
-}, {
-    timestamps: true
-});
-
-// Index for faster queries
-appointmentSchema.index({ date: 1, doctor: 1 });
-appointmentSchema.index({ patient: 1, status: 1 });
-
-module.exports = mongoose.model('Appointment', appointmentSchema);
+    return Appointment;
+};
