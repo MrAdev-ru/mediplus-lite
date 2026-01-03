@@ -44,7 +44,14 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
-            background: linear-gradient(135deg, #046cd3 0%, #e00909 100%);
+            /* background: linear-gradient(135deg, #046cd3 0%, #e00909 100%); */
+            background-image: url('../img/familymedbino.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-color: #f5f5f5;
+            position: relative;
         }
         
         .login-card {
@@ -54,6 +61,14 @@
             overflow: hidden;
             max-width: 400px;
             width: 100%;
+            padding: 0;
+            background: rgba(255,255,255,0.06); /* translucent to let background show through */
+            backdrop-filter: blur(10px) saturate(120%);
+            -webkit-backdrop-filter: blur(10px) saturate(120%);
+            border: 1px solid rgba(255,255,255,0.18);
+            box-shadow: 0 8px 30px rgba(3,8,18,0.6);
+            color: #fff;
+            transition: all 0.3s ease;
         }
         
         .login-header {
@@ -332,98 +347,62 @@
     
 <!-- Login Script - FIXED VERSION -->
       <script>
-    $(document).ready(function() {
-        // Remove preloader
-        $('.preloader').fadeOut();
-
-        // Single submit handler with validation + fallback demo login
-        $('#adminLoginForm').on('submit', async function(e) {
-            e.preventDefault();
-
-            const username = $('#adminUsername').val().trim();
-            const password = $('#adminPassword').val();
-
-            // Reset errors
-            $('.error-message').hide();
-            $('.form-control').removeClass('error');
-
-            // Validate
-            let isValid = true;
-
-            if (!username) {
-                $('#usernameError').show();
-                $('#adminUsername').addClass('error');
-                isValid = false;
-            }
-
-            if (!password || password.length < 6) {
-                $('#passwordError').show();
-                $('#adminPassword').addClass('error');
-                isValid = false;
-            }
-
-            if (!isValid) return;
-
-            // Show loading
-            $('.btn-login').html('<i class="fa fa-spinner fa-spin"></i> Logging in...');
-            $('.btn-login').prop('disabled', true);
-
-            try {
-                // Try real API if available
-                if (window.FamilyMedAPI && typeof FamilyMedAPI.login === 'function') {
-                    const response = await FamilyMedAPI.login({
-                        email: username,
-                        password: password
-                    });
-
-                    if (response && response.success) {
-                        const role = response.data && response.data.user && response.data.user.role;
-                        switch (role) {
-                            case 'admin':
-                                window.location.href = 'admin-dashboard.html';
-                                return;
-                            case 'doctor':
-                                window.location.href = 'doctor-dashboard.html';
-                                return;
-                            case 'patient':
-                                window.location.href = 'patient-dashboard.html';
-                                return;
-                            default:
-                                alert('Unknown user role');
-                        }
-                    } else {
-                        alert('Login failed. Please check your credentials.');
-                    }
-                } else {
-                    // Fallback demo credentials
-                    const demoCredentials = [
-                        { username: 'admin', password: 'admin123' },
-                        { username: 'superadmin', password: 'superadmin123' }
-                    ];
-
-                    const isValidLogin = demoCredentials.some(cred =>
-                        cred.username === username && cred.password === password
-                    );
-
-                    if (isValidLogin) {
-                        // Successful demo login - redirect to admin dashboard
-                        const currentPath = window.location.pathname;
-                        const dashboardPath = currentPath.replace('Admin.html', 'admin-dashboard.html');
-                        window.location.href = dashboardPath;
-                        return;
-                    } else {
-                        alert('Invalid credentials. Please try again.');
-                    }
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                alert(error && error.message ? error.message : 'Login failed. Please try again.');
-            } finally {
-                // Reset button
-                $('.btn-login').html('<i class="fa fa-sign-in"></i> Login as Admin');
-                $('.btn-login').prop('disabled', false);
-            }
+    // Replace your login form submission with:
+document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('adminUsername').value.trim();
+    const password = document.getElementById('adminPassword').value;
+    
+    try {
+        // Show loading
+        const loginBtn = document.querySelector('.btn-login');
+        loginBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Logging in...';
+        loginBtn.disabled = true;
+        
+        // API call
+        const response = await FamilyMedAPI.login({
+            email: username,
+            password: password
         });
+        
+        if (response.success) {
+            // Redirect based on role
+            const role = response.data.user.role;
+            
+            switch(role) {
+                case 'admin':
+                    window.location.href = 'admin-dashboard.html';
+                    break;
+                case 'doctor':
+                    window.location.href = 'doctor-dashboard.html';
+                    break;
+                case 'patient':
+                    window.location.href = 'patient-dashboard.html';
+                    break;
+                default:
+                    alert('Unknown user role');
+            }
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert(error.message || 'Login failed. Please try again.');
+        
+        // Reset button
+        const loginBtn = document.querySelector('.btn-login');
+        loginBtn.innerHTML = '<i class="fa fa-sign-in"></i> Login as Admin';
+        loginBtn.disabled = false;
+    }
+});
+
+    // Ensure jQuery is loaded before this script
+    $(document).ready(function() {
+        // Reset button
+        const loginBtn = document.querySelector('.btn-login');
+        if (loginBtn) {
+            loginBtn.innerHTML = '<i class="fa fa-sign-in"></i> Login as Admin';
+            loginBtn.disabled = false;
+        }
 
         // Google login (demo)
         $('#googleLoginBtn').on('click', function() {
@@ -460,7 +439,8 @@
         if ((username === 'admin' && password === 'admin123') ||
             (username === 'superadmin' && password === 'superadmin123')) {
             window.location.href = 'admin-dashboard.html';
-            return true;
+        } else {
+            alert('Invalid credentials');
         }
     }
 </script>
