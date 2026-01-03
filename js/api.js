@@ -1,307 +1,110 @@
-class FamilyMedAPI {
-    constructor() {
-        this.baseURL = 'http://localhost:5000/api';
-        this.token = localStorage.getItem('token');
-    }
+const API_BASE_URL = 'http://localhost:5000/api';
 
-    // Set authentication token
-    setToken(token) {
-        this.token = token;
-        localStorage.setItem('token', token);
-    }
+const FamilyMedAPI = {
+    // Auth
+    login: async (credentials) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(credentials)
+            });
 
-    // Remove token (logout)
-    removeToken() {
-        this.token = null;
-        localStorage.removeItem('token');
-    }
+            const data = await response.json();
 
-    // Get headers for API requests
-    getHeaders() {
-        const headers = {
-            'Content-Type': 'application/json',
-        };
+            if (!response.ok) {
+                throw new Error(data.message || 'Login failed');
+            }
 
-        if (this.token) {
-            headers['Authorization'] = `Bearer ${this.token}`;
+            return { success: true, data };
+        } catch (error) {
+            console.error('API Login Error:', error);
+            throw error;
         }
+    },
 
-        return headers;
-    }
+    register: async (userData) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            });
 
-    // Handle API response
-    async handleResponse(response) {
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw {
-                status: response.status,
-                message: data.message || 'Something went wrong',
-                errors: data.errors
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Registration failed');
+            }
+
+            return { success: true, data };
+        } catch (error) {
+            console.error('API Register Error:', error);
+            throw error;
+        }
+    },
+
+    // Contact
+    submitContact: async (contactData) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/contact`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(contactData)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to send message');
+            }
+
+            return { success: true, data };
+        } catch (error) {
+            console.error('API Contact Error:', error);
+            throw error;
+        }
+    },
+
+    // Appointments
+    bookAppointment: async (appointmentData, token) => {
+        try {
+            const headers = {
+                'Content-Type': 'application/json'
             };
+            if (token) {
+                headers['x-auth-token'] = token;
+            }
+
+            const response = await fetch(`${API_BASE_URL}/appointments`, {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(appointmentData)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.msg || data.message || 'Booking failed');
+            }
+
+            return { success: true, data };
+        } catch (error) {
+            console.error('API Appointment Error:', error);
+            throw error;
         }
-
-        return data;
     }
+};
 
-    // ========== AUTHENTICATION ==========
-    async register(userData) {
-        const response = await fetch(`${this.baseURL}/auth/register`, {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify(userData)
-        });
-
-        const data = await this.handleResponse(response);
-        
-        if (data.success && data.data.token) {
-            this.setToken(data.data.token);
-        }
-
-        return data;
-    }
-
-    async login(credentials) {
-        const response = await fetch(`${this.baseURL}/auth/login`, {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify(credentials)
-        });
-
-        const data = await this.handleResponse(response);
-        
-        if (data.success && data.data.token) {
-            this.setToken(data.data.token);
-        }
-
-        return data;
-    }
-
-    async getCurrentUser() {
-        const response = await fetch(`${this.baseURL}/auth/me`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async updateProfile(profileData) {
-        const response = await fetch(`${this.baseURL}/auth/profile`, {
-            method: 'PUT',
-            headers: this.getHeaders(),
-            body: JSON.stringify(profileData)
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async changePassword(passwordData) {
-        const response = await fetch(`${this.baseURL}/auth/change-password`, {
-            method: 'PUT',
-            headers: this.getHeaders(),
-            body: JSON.stringify(passwordData)
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async logout() {
-        const response = await fetch(`${this.baseURL}/auth/logout`, {
-            method: 'POST',
-            headers: this.getHeaders()
-        });
-
-        this.removeToken();
-        return this.handleResponse(response);
-    }
-
-    // ========== APPOINTMENTS ==========
-    async createAppointment(appointmentData) {
-        const response = await fetch(`${this.baseURL}/appointments`, {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify(appointmentData)
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async getAppointments(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        const response = await fetch(`${this.baseURL}/appointments?${queryString}`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async getAppointment(id) {
-        const response = await fetch(`${this.baseURL}/appointments/${id}`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async updateAppointment(id, updateData) {
-        const response = await fetch(`${this.baseURL}/appointments/${id}`, {
-            method: 'PUT',
-            headers: this.getHeaders(),
-            body: JSON.stringify(updateData)
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async cancelAppointment(id) {
-        const response = await fetch(`${this.baseURL}/appointments/${id}/cancel`, {
-            method: 'PUT',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    // ========== DOCTORS ==========
-    async getDoctors(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        const response = await fetch(`${this.baseURL}/doctors?${queryString}`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async getDoctor(id) {
-        const response = await fetch(`${this.baseURL}/doctors/${id}`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async getDoctorSchedule(id, date) {
-        const response = await fetch(`${this.baseURL}/doctors/${id}/schedule?date=${date}`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    // ========== PATIENTS ==========
-    async getPatients(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        const response = await fetch(`${this.baseURL}/patients?${queryString}`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async getPatient(id) {
-        const response = await fetch(`${this.baseURL}/patients/${id}`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async getPatientMedicalHistory(id) {
-        const response = await fetch(`${this.baseURL}/patients/${id}/medical-history`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    // ========== PRESCRIPTIONS ==========
-    async createPrescription(prescriptionData) {
-        const response = await fetch(`${this.baseURL}/prescriptions`, {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify(prescriptionData)
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async getPrescriptions(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        const response = await fetch(`${this.baseURL}/prescriptions?${queryString}`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    // ========== SERVICES ==========
-    async getServices(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        const response = await fetch(`${this.baseURL}/services?${queryString}`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    // ========== ADMIN ==========
-    async getDashboardStats() {
-        const response = await fetch(`${this.baseURL}/admin/dashboard-stats`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async getAllUsers(params = {}) {
-        const queryString = new URLSearchParams(params).toString();
-        const response = await fetch(`${this.baseURL}/admin/users?${queryString}`, {
-            method: 'GET',
-            headers: this.getHeaders()
-        });
-
-        return this.handleResponse(response);
-    }
-
-    async updateUserStatus(id, status) {
-        const response = await fetch(`${this.baseURL}/admin/users/${id}/status`, {
-            method: 'PUT',
-            headers: this.getHeaders(),
-            body: JSON.stringify({ status })
-        });
-
-        return this.handleResponse(response);
-    }
-
-    // ========== FILE UPLOAD ==========
-    async uploadFile(file, type) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', type);
-
-        const response = await fetch(`${this.baseURL}/upload`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${this.token}`
-            },
-            body: formData
-        });
-
-        return this.handleResponse(response);
-    }
+// Export for module systems, or attach to window for vanilla
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = FamilyMedAPI;
+} else {
+    window.FamilyMedAPI = FamilyMedAPI;
 }
-
-// Create global API instance
-window.FamilyMedAPI = new FamilyMedAPI();
